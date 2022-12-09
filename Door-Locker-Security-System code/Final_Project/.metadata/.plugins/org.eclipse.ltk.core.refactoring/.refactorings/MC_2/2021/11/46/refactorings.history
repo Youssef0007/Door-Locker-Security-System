@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">&#x0A;<refactoring comment="Rename resource &apos;MC_2/mc2.c&apos; to &apos;CONTROL_ECU.c&apos;" description="Rename resource &apos;mc2.c&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="mc2.c" name="CONTROL_ECU.c" stamp="1636463397767" updateReferences="true"/>&#x0A;<refactoring comment="Rename resource &apos;MC_2/mc2.h&apos; to &apos;CONTROL_ECU.h&apos;" description="Rename resource &apos;mc2.h&apos;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="mc2.h" name="CONTROL_ECU.h" stamp="1636463418499" updateReferences="true"/>
+</session>

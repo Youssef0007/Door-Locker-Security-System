@@ -1,0 +1,187 @@
+/******************************************************************************
+ *
+ * File Name: mc2.h
+ *
+ * Description: door locker security system micro2
+ *
+ * Date Creation: 31/10/2021
+ *
+ * Author: Youssef Abdel Aziz
+ *
+ *******************************************************************************/
+
+/******************************************************************************
+ *								Headers                                        *
+ *******************************************************************************/
+
+#include"mc2.h"
+//#include"dc_motor.h"
+#include"gpio.h"
+//#include"buzzer.h"
+#include"twi.h"
+#include"uart.h"
+#include"external_eeprom.h"
+//#include"timer.h"
+#include"common_macros.h"
+#include "lcd.h"
+#include<util/delay.h>
+
+
+/******************************************************************************
+ *								GLOBAL VARIABLES                              *
+ *******************************************************************************/
+Uart_ConfigType g_UartMc2 ={_8_BITS,_1_BIT,DISABLED,9600};
+Twi_ConfigType  g_Twi={BITRATE_2,TWI_PRESCALER_1,TWI_SLAVE_ADDRESS};
+/******************************************************************************
+ *								Main                                          *
+ *******************************************************************************/
+int main()
+{	TWI_init(&g_Twi);
+UART_init(&g_UartMc2);
+LCD_init();
+//DcMotor_Init();
+while(UART_recieveByte() != MC2_READY){}
+LCD_displayStringRowColumn(0,0,"ready");
+_delay_ms(500);
+//DcMotor_Init();
+MC2_checkNewPassword();
+//MC2_selectedOptions();
+
+
+
+/******************************************************************************
+ *								super loop                                    *
+ *******************************************************************************/
+while(1)
+{
+	LCD_displayStringRowColumn(0,0,"super");
+}
+}
+
+/*******************************************************************************
+ *                      Functions Definitions                                  *
+ *******************************************************************************/
+uint8  MC2_checkNewPassword()
+{
+	uint8 Password[PASS_LENGTH+1];/*array to get the current password in it from eeprom*/
+	UART_receiveString(g_recivedIntialPassword);
+	LCD_displayStringRowColumn(0,0,"RECIVED1");
+	LCD_displayString(g_recivedIntialPassword);
+	UART_receiveString(g_recivedReenterdPassword);
+	LCD_clearScreen();
+	LCD_displayStringRowColumn(0,0,"RECIVED2");
+	LCD_displayString(g_recivedReenterdPassword);
+	for(uint8 i=0;i<PASS_LENGTH;i++)
+	{
+		if(g_recivedIntialPassword[i]!=g_recivedReenterdPassword[i])
+		{
+			UART_sendByte(MISMATCH);
+			MC2_checkNewPassword();
+			return 0;
+		}
+	}
+	UART_sendByte(MATCH);
+	MC2_savePassword(g_recivedReenterdPassword);
+	MC2_readPassword(Password);
+	LCD_moveCursor(1,0);
+	LCD_displayString(Password);
+	_delay_ms(10000);
+	return 0;
+}
+void  MC2_selectedOptions(void)
+{
+	uint8 KEY;
+	LCD_clearScreen();
+	KEY=UART_recieveByte();
+	LCD_displayCharacter(KEY);
+	MC2_checkPassword();
+
+
+	LCD_clearScreen();
+	LCD_displayStringRowColumn(0,0,"options");
+
+
+	if(KEY=='+')
+	{
+	//	MC2_openDoor();
+
+	}
+	else if(KEY=='-')
+	{
+		MC2_checkPassword();
+	}
+}
+//void  MC2_openDoor(void)
+//{
+//	DcMotor_Rotate(CLOCKWISE,_50_PERCENT);
+//	/*delay 15 sec using timer
+//	 print door is opening on LCD
+//	 */
+//
+//	/*then hold the door opened for 3 sec
+//	 print door open on LCD
+//	 */
+//	DcMotor_Rotate(ANTI_CLOCKWISE,_50_PERCENT);
+//	/*delay 15 sec using timer
+//	 print door is closing on LCD
+//	 */
+//}
+uint8  MC2_checkPassword(void)
+{
+	uint8 recievedPassword[PASS_LENGTH+1];/*array to save the entered password in it*/
+	uint8 Password[PASS_LENGTH+1];/*array to get the current password in it from eeprom*/
+	LCD_clearScreen();
+	static uint8 mismatchCounter=0;/*variable to count the times of false enters*/
+	UART_receiveString(recievedPassword);/*storing the entered password*/
+	LCD_moveCursor(0,0);
+	//LCD_intgerToString(recievedPassword);
+	//_delay_ms(1000);
+	MC2_readPassword(Password);
+	LCD_moveCursor(1,0);
+	LCD_displayString(Password);
+	_delay_ms(20000);
+
+	for(uint8 i=0;i<PASS_LENGTH;i++)
+	{/*compare the two arrays*/
+		if(recievedPassword[i]!=Password[i])
+		{/*if they are not the same increment the counter by 1*/
+			mismatchCounter++;
+			LCD_displayStringRowColumn(0,0,"miss++");
+			_delay_ms(2000); /* Press time */
+
+			UART_sendByte(MISMATCH);/*send the mismatch flag to MC1_mainOptions*/
+			if(mismatchCounter==3)
+			{/*if the password was entered wrong for 3 times*/
+				/*call buzzer alarm and delay for 1 min*/
+				mismatchCounter=0;
+			}
+			MC2_checkPassword();/*call the same function in case of wrong password*/
+		}
+	}
+	UART_sendByte(MATCH);/*send the match flag to MC1_mainOptions*/
+	return 0;
+}
+void  MC2_savePassword(uint8 *a_passwordArr)
+{/*save the new password in the eeprom*/
+	/*we will locate the password in the meemory in five consecutive
+	 * then we will loop on the 5 places to read or write the password*/
+	for(int i=0;i<PASS_LENGTH;i++)
+	{
+		EEPROM_writeByte(PASSWORD_ADDRESS+i,*a_passwordArr);
+		a_passwordArr++;
+	}
+}
+//void MC2_alarm()
+//{
+//	BUZZER_on();
+//	/*delay for 1 min*/
+//	BUZZER_off();
+//}
+void  MC2_readPassword(uint8 *a_passwordSavedInEeprom)
+{
+	for(int i=0;i<PASS_LENGTH;i++)
+	{
+		EEPROM_readByte(PASSWORD_ADDRESS+i,*a_passwordSavedInEeprom);/*reading the correct password from eeprom*/
+		a_passwordSavedInEeprom++;
+	}
+}

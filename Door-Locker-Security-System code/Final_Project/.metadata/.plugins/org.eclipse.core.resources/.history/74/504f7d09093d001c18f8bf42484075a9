@@ -1,0 +1,44 @@
+/******************************************************************************
+ *
+ * File Name: mc2.h
+ *
+ * Description: door locker security system micro2
+ *
+ * Date Creation: 31/10/2021
+ *
+ * Author: Youssef Abdel Aziz
+ *
+ *******************************************************************************/
+
+#ifndef MC2_H_
+#define MC2_H_
+
+#include"std_types.h"
+/*******************************************************************************
+ *                      Definitions & static configuration                     *
+ *******************************************************************************/
+#define MC2_READY 0x01
+#define PASS_LENGTH 5
+#define MISMATCH	0
+#define MATCH		1
+#define PASSWORD_ADDRESS 0x0311
+#define TWI_SLAVE_ADDRESS 0b0000011
+uint8 g_recivedIntialPassword[PASS_LENGTH+1];
+uint8 g_recivedReenterdPassword[PASS_LENGTH+1];
+
+/*******************************************************************************
+ *                      Types declarations                                   *
+ *******************************************************************************/
+
+
+/*******************************************************************************
+ *                      Functions Prototypes                                   *
+ *******************************************************************************/
+void   MC2_selectedOptions(void);
+void   MC2_openDoor(void);
+uint8  MC2_checkPassword(void);
+uint8  MC2_checkNewPassword(void);
+void  MC2_savePassword(uint8 *a_passwordArr);
+void  MC2_alarm(void);
+void  MC2_readPassword(uint8 *a_passwordSavedInEeprom);
+#endif /* MC2_H_ */
